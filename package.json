@@ -1,0 +1,19 @@
+{
+      "name": "ceki-server",
+      "version": "1.0.0",
+      "description": "my thesis server",
+      "main": "server.js",
+      "scripts": {
+            "test": "echo \"Error: no test specified\" && exit 1"
+      },
+      "author": "",
+      "license": "ISC",
+      "dependencies": {
+            "body-parser": "^1.18.3",
+            "express": "^4.16.3",
+            "express-ws": "^4.0.0",
+            "lodash": "^4.17.10",
+            "socket.io": "^2.1.1",
+            "ws": "^5.2.0"
+      }
+}
