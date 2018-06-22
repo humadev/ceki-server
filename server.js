@@ -20,18 +20,14 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', socket => {
-      socket.on('send room', data => {
-            io.emit('move', data);
-      });
-      socket.on('create room', data => {
-            console.log('room created', data);
-            roomID = createRoom();
-            io.emit('create room', {roomID: roomID});
-      });
+    socket.on('create room', data => {
+        roomID = createRoom();
+        io.emit('create room', {roomID: roomID});
+    });
 
-      socket.on('join room', data => {
-            io.emit(data.roomID, {type: 'join', data: {name: data.name}});
-      });
+    socket.on('join room', data => {
+        io.emit(data.roomID, {type: 'join', data: {name: data.name, email: data.email}});
+    });
 
     socket.on('update room', data => {
         io.emit(data.roomID, { type: 'players', data: data.data });
