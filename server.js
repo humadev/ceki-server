@@ -26,6 +26,7 @@ io.on('connection', socket => {
     });
 
     socket.on('join room', data => {
+        console.log('join room');
         io.emit(data.roomID, {type: 'join', data: {name: data.name, email: data.email}});
     });
 
