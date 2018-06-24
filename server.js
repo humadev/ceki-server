@@ -100,7 +100,6 @@ io.on('connection', socket => {
                   './rooms/' + data.roomID + '.json',
                   JSON.stringify(room)
             );
-            console.log(room.playersNumber);
             socket.emit('join room', { index: room.playersNumber - 1 });
             io.in(data.roomID).emit('room', room.players);
       });
