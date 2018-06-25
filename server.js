@@ -76,7 +76,10 @@ io.on('connection', socket => {
                                     name: data.name,
                                     email: data.email,
                                     cards: [],
-                                    trash: []
+                                    trash: [],
+                                    turn: true,
+                                    pick: 1,
+                                    throw: 1
                               }
                         ],
                         dealers: [],
@@ -93,7 +96,10 @@ io.on('connection', socket => {
                   name: data.name,
                   email: data.email,
                   cards: [],
-                  trash: []
+                  trash: [],
+                  turn: false,
+                  pick: 0,
+                  throw: 0
             });
             room.playersNumber++;
             fs.writeFileSync(
@@ -102,6 +108,12 @@ io.on('connection', socket => {
             );
             socket.emit('join room', { index: room.playersNumber - 1 });
             io.in(data.roomID).emit('room', room.players);
+      });
+
+      socket.on('rejoin room', data => {
+            socket.join(data.roomID);
+            let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
+            socket.emit('rejoin room', { gameState: JSON.parse(room) });
       });
 
       socket.on('init play', data => {
@@ -138,6 +150,14 @@ io.on('connection', socket => {
             room = JSON.parse(room);
             room.players[data.index].cards = data.card;
             room.players[data.index].trash = data.trash;
+            room.players[data.index].turn = !data.turning;
+            room.players[data.index].pick = data.pick;
+            room.players[data.index].throw = data.throw;
+            if (data.turning === false) {
+                  room.players[whosTurn(data.index)].turn = true;
+                  room.players[whosTurn(data.index)].pick = 1;
+                  room.players[whosTurn(data.index)].throw = 1;
+            }
             room.dealers = data.dealers;
             fs.writeFileSync(
                   './rooms/' + data.roomID + '.json',
@@ -145,3 +165,11 @@ io.on('connection', socket => {
             );
       });
 });
+
+function whosTurn(index) {
+      let obsIndex = index + 1;
+      if (obsIndex > 4) {
+            obsIndex -= 5;
+      }
+      return obsIndex;
+}
