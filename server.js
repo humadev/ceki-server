@@ -79,7 +79,8 @@ io.on('connection', socket => {
                                     trash: [],
                                     turn: true,
                                     pick: 1,
-                                    throw: 1
+                                    throw: 1,
+                                    date: data.date
                               }
                         ],
                         dealers: [],
@@ -99,7 +100,8 @@ io.on('connection', socket => {
                   trash: [],
                   turn: false,
                   pick: 0,
-                  throw: 0
+                  throw: 0,
+                  date: data.date
             });
             room.playersNumber++;
             fs.writeFileSync(
@@ -153,6 +155,7 @@ io.on('connection', socket => {
             room.players[data.index].turn = !data.turning;
             room.players[data.index].pick = data.pick;
             room.players[data.index].throw = data.throw;
+            room.players[data.index].date = data.date;
             if (data.turning === false) {
                   room.players[whosTurn(data.index)].turn = true;
                   room.players[whosTurn(data.index)].pick = 1;
