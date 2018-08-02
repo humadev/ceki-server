@@ -148,7 +148,6 @@ io.on('connection', socket => {
 
       socket.on('move', data => {
             let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
-            io.to(data.roomID).emit('move', data);
             room = JSON.parse(room);
             room.players[data.index].cards = data.card;
             room.players[data.index].trash = data.trash;
@@ -156,11 +155,12 @@ io.on('connection', socket => {
             room.players[data.index].pick = data.pick;
             room.players[data.index].throw = data.throw;
             room.players[data.index].date = data.date;
-            if (data.turning === false) {
+            if (data.turning === true) {
                   room.players[whosTurn(data.index)].turn = true;
                   room.players[whosTurn(data.index)].pick = 1;
                   room.players[whosTurn(data.index)].throw = 1;
             }
+            io.to(data.roomID).emit('move', data);
             room.dealers = data.dealers;
             fs.writeFileSync(
                   './rooms/' + data.roomID + '.json',
