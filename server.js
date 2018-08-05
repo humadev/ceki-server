@@ -192,9 +192,15 @@ io.on('connection', socket => {
             room.players[data.index].throw = data.throw;
             room.players[data.index].date = data.date;
             if (data.turning === true) {
-                  room.players[whosTurn(data.index)].turn = true;
-                  room.players[whosTurn(data.index)].pick = 1;
-                  room.players[whosTurn(data.index)].throw = 1;
+                  room.players[
+                        whosTurn(data.index, room.players.length)
+                  ].turn = true;
+                  room.players[
+                        whosTurn(data.index, room.players.length)
+                  ].pick = 1;
+                  room.players[
+                        whosTurn(data.index, room.players.length)
+                  ].throw = 1;
             }
             io.to(data.roomID).emit('move', data);
             room.dealers = data.dealers;
@@ -205,10 +211,10 @@ io.on('connection', socket => {
       });
 });
 
-function whosTurn(index) {
+function whosTurn(index, players) {
       let obsIndex = index + 1;
-      if (obsIndex > 4) {
-            obsIndex -= 5;
+      if (obsIndex > players - 1) {
+            obsIndex -= players;
       }
       return obsIndex;
 }
