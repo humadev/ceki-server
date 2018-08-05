@@ -1,5 +1,7 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var fs = require('fs');
+var record = require('./record');
 
 var server = require('http').Server(app);
 var ExpressPeerServer = require('peer').ExpressPeerServer;
@@ -12,16 +14,23 @@ var options = {
 };
 
 var peerserver = ExpressPeerServer(server, options);
+
 app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', 'http://localhost:4200');
       res.header('Access-Control-Allow-Credentials', true);
       res.header(
             'Access-Control-Allow-Headers',
-            'Origin, X - Requested - With, Content - Type, Accept'
+            'Origin, X-Requested-With, Content-Type, Accept'
       );
       next();
 });
+
+app.use(express.urlencoded({ extended: false })); // merubah bentuk request body menjadi urlencoded yang dipahami server jika berupa application/urlencoded
+app.use(express.json({ limit: '1000mb' })); // merubah bentuk request body menjadi json yang dipahami server jika berupa application/json
+
 app.use('/webrtc', peerserver);
+app.use('/record', record);
+
 peerserver.on('connection', id => {
       console.log('connection', id);
 });
