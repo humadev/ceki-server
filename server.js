@@ -40,36 +40,157 @@ peerserver.on('disconnect', id => {
 });
 
 var cards = [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30
+      {
+          no: 1,
+          soroh: 'a',
+          namaSoroh: 'raja',
+
+      },
+      {
+          no:2,
+          soroh: 'f',
+          namaSoroh: ''
+      },
+      {
+          no:3,
+          soroh: 'b',
+          namaSoroh: 'katik 1'
+      },
+      {
+          no:4,
+          soroh: 'b',
+          namaSoroh: 'katik 1'
+      },
+      {
+          no:5,
+          soroh: 'b',
+          namaSoroh: 'katik 1'
+      },
+      {
+          no:6,
+          soroh: 'c',
+          namaSoroh: ''
+      },
+      {
+          no:7,
+          soroh: 'c',
+          namaSoroh: ''
+      },
+      {
+          no:8,
+          soroh: 'c',
+          namaSoroh: ''
+      },
+      {
+          no:9,
+          soroh: 'd',
+          namaSoroh: 'ringgit'
+      },
+      {
+          no:10,
+          soroh: 'd',
+          namaSoroh: 'ringgit'
+      },
+      {
+          no:11,
+          soroh: 'd',
+          namaSoroh: 'ringgit'
+      },
+      {
+          no:12,
+          soroh: 'e',
+          namaSoroh: 'katik 2'
+      },
+      {
+          no:13,
+          soroh: 'e',
+          namaSoroh: 'katik 2'
+      },
+      {
+          no:14,
+          soroh: 'e',
+          namaSoroh: 'katik 2'
+      },
+      {
+          no:15,
+          soroh: 'f',
+          namaSoroh: ''
+      },
+      {
+          no:16,
+          soroh: 'f',
+          namaSoroh: ''
+      },
+      {
+          no:17,
+          soroh: 'g',
+          namaSoroh: ''
+      },
+      {
+          no:18,
+          soroh: 'g',
+          namaSoroh: ''
+      },
+      {
+          no:19,
+          soroh: 'g',
+          namaSoroh: ''
+      },
+      {
+          no:20,
+          soroh: 'h',
+          namaSoroh: 'caling'
+      },
+      {
+          no:21,
+          soroh: 'h',
+          namaSoroh: 'caling'
+      },
+      {
+          no:22,
+          soroh: 'a',
+          namaSoroh: ''
+      },
+      {
+          no:23,
+          soroh: 'a',
+          namaSoroh: ''
+      },
+      {
+          no:24,
+          soroh: 'i',
+          namaSoroh: ''
+      },
+      {
+          no:25,
+          soroh: 'i',
+          namaSoroh: ''
+      },
+      {
+          no:26,
+          soroh: 'i',
+          namaSoroh: ''
+      },
+      {
+          no:27,
+          soroh: 'j',
+          namaSoroh: ''
+      },
+      {
+          no:28,
+          soroh: 'j',
+          namaSoroh: ''
+      },
+      {
+          no:29,
+          soroh: 'j',
+          namaSoroh: ''
+      },
+      {
+          no:30,
+          soroh: 'h',
+          namaSoroh: 'caling'
+      }
 ];
 
 var fullCards = [...cards, ...cards, ...cards, ...cards];
@@ -94,7 +215,9 @@ function shuffle(arr) {
 }
 
 app.get('/', function(req, res) {
-      res.sendfile(__dirname + '/index.html');
+      res.json({
+          status: true
+      });
 });
 
 io.on('connection', socket => {
