@@ -238,7 +238,11 @@ io.on('connection', socket => {
                                     turn: true,
                                     pick: 1,
                                     throw: 1,
-                                    date: data.date
+                                    date: data.date,
+                                    soca: [],
+                                    serigat: [],
+                                    lawang: [],
+                                    status: ''
                               }
                         ],
                         dealers: [],
@@ -261,7 +265,11 @@ io.on('connection', socket => {
                   turn: false,
                   pick: 0,
                   throw: 0,
-                  date: data.date
+                  date: data.date,
+                  soca: [],
+                  serigat: [],
+                  lawang: [],
+                  status: ''
             });
             room.playersNumber++;
             fs.writeFileSync(
@@ -318,6 +326,11 @@ io.on('connection', socket => {
             room.players[data.index].pick = data.pick;
             room.players[data.index].throw = data.throw;
             room.players[data.index].date = data.date;
+            room.players[data.index].soca = data.soca;
+            room.players[data.index].serigat = data.serigat;
+            room.players[data.index].lawang = data.lawang;
+            room.players[data.index].status = data.status;
+
             if (data.turning === true) {
                   room.players[
                         whosTurn(data.index, room.players.length)
