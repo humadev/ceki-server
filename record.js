@@ -15,6 +15,10 @@ function record(req, res, next) {
       room.players[data.index].pick = data.pick;
       room.players[data.index].throw = data.throw;
       room.players[data.index].date = data.date;
+      room.players[data.index].soca = data.soca;
+      room.players[data.index].serigat = data.serigat;
+      room.players[data.index].lawang = data.lawang;
+      room.players[data.index].status = data.status;
       if (data.turning === true) {
             room.players[whosTurn(data.index, room.players.length)].turn = true;
             room.players[whosTurn(data.index, room.players.length)].pick = 1;

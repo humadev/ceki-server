@@ -238,11 +238,7 @@ io.on('connection', socket => {
                                     turn: true,
                                     pick: 1,
                                     throw: 1,
-                                    date: data.date,
-                                    soca: [],
-                                    serigat: [],
-                                    lawang: [],
-                                    status: ''
+                                    date: data.date
                               }
                         ],
                         dealers: [],
