@@ -6,6 +6,7 @@ var record = require('./record');
 var server = require('http').Server(app);
 var ExpressPeerServer = require('peer').ExpressPeerServer;
 var io = require('socket.io')(server);
+var db = require('./database.js');
 
 server.listen(3000);
 
@@ -220,38 +221,99 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', socket => {
-      socket.on('create room', data => {
+      socket.on('create room', async data => {
             roomID = createRoom();
             socket.join(roomID);
             io.in(roomID).emit('create room', { roomID: roomID });
-            fs.writeFileSync(
-                  './rooms/' + roomID + '.json',
-                  JSON.stringify({
-                        players: [
-                              {
-                                    uid: data.uid,
-                                    name: data.name,
-                                    email: data.email,
-                                    photo: data.photo,
-                                    cards: [],
-                                    trash: [],
-                                    turn: true,
-                                    pick: 1,
-                                    throw: 1,
-                                    date: data.date
-                              }
-                        ],
-                        dealers: [],
-                        playersNumber: 1
-                  })
-            );
+            const insert = await db.connection('rooms').insert({
+                roomid: roomID,
+                players: 1,
+                status: 'init',
+                state: JSON.stringify({
+                    players: [{
+                        uid: data.uid,
+                        name: data.name,
+                        email: data.email,
+                        photo: data.photo,
+                        cards: [],
+                        trash: [],
+                        turn: true,
+                        pick: 1,
+                        throw: 1,
+                        date: data.date
+                    }],
+                    dealers: [],
+                    playersNumber: 1
+                })
+            });
+            // fs.writeFileSync(
+            //       './rooms/' + roomID + '.json',
+            //       JSON.stringify({
+            //             players: [
+            //                   {
+            //                         uid: data.uid,
+            //                         name: data.name,
+            //                         email: data.email,
+            //                         photo: data.photo,
+            //                         cards: [],
+            //                         trash: [],
+            //                         turn: true,
+            //                         pick: 1,
+            //                         throw: 1,
+            //                         date: data.date
+            //                   }
+            //             ],
+            //             dealers: [],
+            //             playersNumber: 1
+            //       })
+            // );
       });
 
-      socket.on('join room', data => {
+      socket.on('auto join room', async data => {
+          const rooms = await db.connection('rooms').where('status', 'init').orderBy('id_room', 'desc');
+            console.log(rooms[0]);
+          var thisRoom = rooms[0];
+          socket.join(thisRoom.roomid);
+        //   let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
+          state = JSON.parse(thisRoom.state);
+          state.players.push({
+              uid: data.uid,
+              name: data.name,
+              email: data.email,
+              photo: data.photo,
+              cards: [],
+              trash: [],
+              turn: false,
+              pick: 0,
+              throw: 0,
+              date: data.date,
+              soca: [],
+              serigat: [],
+              lawang: [],
+              status: ''
+          });
+          state.playersNumber++;
+          const update = await db.connection('rooms').where('roomid', thisRoom.roomid).update({
+              state: JSON.stringify(state),
+              players: state.playersNumber
+          });
+          // fs.writeFileSync(
+          //       './rooms/' + data.roomID + '.json',
+          //       JSON.stringify(room)
+          // );
+          socket.emit('auto join room', {
+              index: state.playersNumber - 1,
+              roomID: thisRoom.roomid
+          });
+          io.in(data.roomID).emit('room', state.players);
+      });
+
+      socket.on('join room', async data => {
             socket.join(data.roomID);
-            let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
-            room = JSON.parse(room);
-            room.players.push({
+            const rooms = await db.connection('rooms').select().where('roomid', data.roomID);
+            // let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
+            state = JSON.parse(rooms[0].state);
+            state.players.push({
                   uid: data.uid,
                   name: data.name,
                   email: data.email,
@@ -267,50 +329,57 @@ io.on('connection', socket => {
                   lawang: [],
                   status: ''
             });
-            room.playersNumber++;
-            fs.writeFileSync(
-                  './rooms/' + data.roomID + '.json',
-                  JSON.stringify(room)
-            );
-            socket.emit('join room', { index: room.playersNumber - 1 });
-            io.in(data.roomID).emit('room', room.players);
+            var players = rooms[0].players++;
+            state.playersNumber = players;
+            const update = await db.connection('rooms').where('roomid', data.roomID).update({
+                state: JSON.stringify(state),
+                players: players
+            });
+            // fs.writeFileSync(
+            //       './rooms/' + data.roomID + '.json',
+            //       JSON.stringify(room)
+            // );
+            socket.emit('join room', { index: players - 1 });
+            io.in(data.roomID).emit('room', state.players);
       });
 
-      socket.on('rejoin room', data => {
+      socket.on('rejoin room', async data => {
             socket.join(data.roomID);
-            let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
+            const rooms = await db.connection('rooms').select().where('roomid', data.roomID);
+            let room = rooms[0];
+            let state = JSON.parse(room.state)
             io.in(data.roomID).emit('rejoin room', {
-                  gameState: JSON.parse(room),
+                  gameState: state,
                   peer: data.peer
             });
       });
 
-      socket.on('init play', data => {
-            let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
-            room = JSON.parse(room);
+      socket.on('init play', async data => {
+            const rooms = await db.connection('rooms').select().where('roomid', data.roomID);
+            let room = rooms[0];
+            let state = JSON.parse(room.state);
             const shuffleCards = shuffle(fullCards);
             let player = 0;
             for (const cards of shuffleCards) {
-                  if (player < room.players.length) {
-                        if (room.players[player].cards.length < 11) {
-                              room.players[player].cards.push(cards);
+                  if (player < state.players.length) {
+                        if (state.players[player].cards.length < 11) {
+                              state.players[player].cards.push(cards);
                         } else {
                               player++;
-                              if (room.players.length !== player) {
-                                    room.players[player].cards.push(cards);
+                              if (state.players.length !== player) {
+                                    state.players[player].cards.push(cards);
                               } else {
-                                    room.dealers.push(cards);
+                                    state.dealers.push(cards);
                               }
                         }
                   } else {
-                        room.dealers.push(cards);
+                        state.dealers.push(cards);
                   }
             }
-            fs.writeFileSync(
-                  './rooms/' + data.roomID + '.json',
-                  JSON.stringify(room)
-            );
-            io.in(data.roomID).emit('play', room);
+            const update = await db.connection('rooms').where('roomid', data.roomID).update({
+                state: JSON.stringify(state)
+            });
+            io.in(data.roomID).emit('play', state);
       });
 
       socket.on('move', data => {

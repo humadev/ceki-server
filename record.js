@@ -1,14 +1,17 @@
 var express = require('express');
 var fs = require('fs');
+var db = require('./database.js');
 // var db = require('../config/config.js').knex;
 var routes = express.Router();
 
 routes.route('/').post(record, error_handling);
+routes.route('/getRoom').get(getRoom, error_handling);
 
-function record(req, res, next) {
+async function record(req, res, next) {
+        const rooms = await db.connection('rooms').where('roomid', data.roomID);
       const data = req.body;
-      let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
-      room = JSON.parse(room);
+      var room = JSON.parse(rooms[0].state);
+    //   let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
       room.players[data.index].cards = data.card;
       room.players[data.index].trash = data.trash;
       room.players[data.index].turn = !data.turning;
@@ -25,13 +28,22 @@ function record(req, res, next) {
             room.players[whosTurn(data.index, room.players.length)].throw = 1;
       }
       room.dealers = data.dealers;
-      fs.writeFileSync(
-            './rooms/' + data.roomID + '.json',
-            JSON.stringify(room)
-      );
+      const update = await db.connection('rooms').where('roomid', data.roomID).update({state: JSON.stringify(room)});
+    //   fs.writeFileSync(
+    //         './rooms/' + data.roomID + '.json',
+    //         JSON.stringify(room)
+    //   );
       res.status(200).json({
             success: true
       });
+}
+
+async function getRoom(req, res, next) {
+    const rooms = await db.connection('rooms').where('status', 'init').orderBy('id_room', 'desc');
+    res.status(200).json({
+        success: true,
+        room: rooms[0]
+    });
 }
 
 function whosTurn(index, player) {
