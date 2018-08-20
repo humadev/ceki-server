@@ -226,92 +226,42 @@ io.on('connection', socket => {
             socket.join(roomID);
             io.in(roomID).emit('create room', { roomID: roomID });
             const insert = await db.connection('rooms').insert({
-                roomid: roomID,
-                players: 1,
-                status: 'init',
-                state: JSON.stringify({
-                    players: [{
-                        uid: data.uid,
-                        name: data.name,
-                        email: data.email,
-                        photo: data.photo,
-                        cards: [],
-                        trash: [],
-                        turn: true,
-                        pick: 1,
-                        throw: 1,
-                        date: data.date
-                    }],
-                    dealers: [],
-                    playersNumber: 1
-                })
+                  room_key: roomID,
+                  players: 1,
+                  status: 'init',
+                  state: JSON.stringify({
+                        players: [
+                              {
+                                    uid: data.uid,
+                                    name: data.name,
+                                    email: data.email,
+                                    photo: data.photo,
+                                    cards: [],
+                                    trash: [],
+                                    turn: true,
+                                    pick: 1,
+                                    throw: 1,
+                                    date: data.date
+                              }
+                        ],
+                        dealers: [],
+                        playersNumber: 1
+                  })
             });
-            // fs.writeFileSync(
-            //       './rooms/' + roomID + '.json',
-            //       JSON.stringify({
-            //             players: [
-            //                   {
-            //                         uid: data.uid,
-            //                         name: data.name,
-            //                         email: data.email,
-            //                         photo: data.photo,
-            //                         cards: [],
-            //                         trash: [],
-            //                         turn: true,
-            //                         pick: 1,
-            //                         throw: 1,
-            //                         date: data.date
-            //                   }
-            //             ],
-            //             dealers: [],
-            //             playersNumber: 1
-            //       })
-            // );
-      });
 
-      socket.on('auto join room', async data => {
-          const rooms = await db.connection('rooms').where('status', 'init').orderBy('id_room', 'desc');
-            console.log(rooms[0]);
-          var thisRoom = rooms[0];
-          socket.join(thisRoom.roomid);
-        //   let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
-          state = JSON.parse(thisRoom.state);
-          state.players.push({
-              uid: data.uid,
-              name: data.name,
-              email: data.email,
-              photo: data.photo,
-              cards: [],
-              trash: [],
-              turn: false,
-              pick: 0,
-              throw: 0,
-              date: data.date,
-              soca: [],
-              serigat: [],
-              lawang: [],
-              status: ''
-          });
-          state.playersNumber++;
-          const update = await db.connection('rooms').where('roomid', thisRoom.roomid).update({
-              state: JSON.stringify(state),
-              players: state.playersNumber
-          });
-          // fs.writeFileSync(
-          //       './rooms/' + data.roomID + '.json',
-          //       JSON.stringify(room)
-          // );
-          socket.emit('auto join room', {
-              index: state.playersNumber - 1,
-              roomID: thisRoom.roomid
-          });
-          io.in(data.roomID).emit('room', state.players);
+            const addpemain = await db.connection('rooms_pemain').insert({
+                  id_room: roomID,
+                  id_pemain: data.uid,
+                  status: 0
+            });
       });
 
       socket.on('join room', async data => {
             socket.join(data.roomID);
-            const rooms = await db.connection('rooms').select().where('roomid', data.roomID);
-            // let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
+            const rooms = await db
+                  .connection('rooms')
+                  .select()
+                  .where('room_key', data.roomID);
             state = JSON.parse(rooms[0].state);
             state.players.push({
                   uid: data.uid,
@@ -329,12 +279,20 @@ io.on('connection', socket => {
                   lawang: [],
                   status: ''
             });
-            var players = rooms[0].players++;
-            state.playersNumber = players;
-            const update = await db.connection('rooms').where('roomid', data.roomID).update({
-                state: JSON.stringify(state),
-                players: players
+            const addpemain = await db.connection('rooms_pemain').insert({
+                  id_room: data.roomID,
+                  id_pemain: data.uid,
+                  status: 0
             });
+            var players = ++rooms[0].players;
+            state.playersNumber = players;
+            const update = await db
+                  .connection('rooms')
+                  .where('room_key', data.roomID)
+                  .update({
+                        state: JSON.stringify(state),
+                        players: players
+                  });
             // fs.writeFileSync(
             //       './rooms/' + data.roomID + '.json',
             //       JSON.stringify(room)
@@ -345,9 +303,12 @@ io.on('connection', socket => {
 
       socket.on('rejoin room', async data => {
             socket.join(data.roomID);
-            const rooms = await db.connection('rooms').select().where('roomid', data.roomID);
+            const rooms = await db
+                  .connection('rooms')
+                  .select()
+                  .where('room_key', data.roomID);
             let room = rooms[0];
-            let state = JSON.parse(room.state)
+            let state = JSON.parse(room.state);
             io.in(data.roomID).emit('rejoin room', {
                   gameState: state,
                   peer: data.peer
@@ -355,7 +316,10 @@ io.on('connection', socket => {
       });
 
       socket.on('init play', async data => {
-            const rooms = await db.connection('rooms').select().where('roomid', data.roomID);
+            const rooms = await db
+                  .connection('rooms')
+                  .select()
+                  .where('room_key', data.roomID);
             let room = rooms[0];
             let state = JSON.parse(room.state);
             const shuffleCards = shuffle(fullCards);
@@ -376,43 +340,52 @@ io.on('connection', socket => {
                         state.dealers.push(cards);
                   }
             }
-            const update = await db.connection('rooms').where('roomid', data.roomID).update({
-                state: JSON.stringify(state)
-            });
+            const update = await db
+                  .connection('rooms')
+                  .where('room_key', data.roomID)
+                  .update({
+                        state: JSON.stringify(state)
+                  });
             io.in(data.roomID).emit('play', state);
       });
 
-      socket.on('move', data => {
-            let room = fs.readFileSync('./rooms/' + data.roomID + '.json');
-            room = JSON.parse(room);
-            room.players[data.index].cards = data.card;
-            room.players[data.index].trash = data.trash;
-            room.players[data.index].turn = !data.turning;
-            room.players[data.index].pick = data.pick;
-            room.players[data.index].throw = data.throw;
-            room.players[data.index].date = data.date;
-            room.players[data.index].soca = data.soca;
-            room.players[data.index].serigat = data.serigat;
-            room.players[data.index].lawang = data.lawang;
-            room.players[data.index].status = data.status;
+      socket.on('move', async data => {
+            const rooms = await db
+                  .connection('rooms')
+                  .select()
+                  .where('room_key', data.roomID);
+            let room = rooms[0];
+            var state = JSON.parse(room.state);
+            state.players[data.index].cards = data.card;
+            state.players[data.index].trash = data.trash;
+            state.players[data.index].turn = !data.turning;
+            state.players[data.index].pick = data.pick;
+            state.players[data.index].throw = data.throw;
+            state.players[data.index].date = data.date;
+            state.players[data.index].soca = data.soca;
+            state.players[data.index].serigat = data.serigat;
+            state.players[data.index].lawang = data.lawang;
+            state.players[data.index].status = data.status;
 
             if (data.turning === true) {
-                  room.players[
-                        whosTurn(data.index, room.players.length)
+                  state.players[
+                        whosTurn(data.index, state.players.length)
                   ].turn = true;
-                  room.players[
-                        whosTurn(data.index, room.players.length)
+                  state.players[
+                        whosTurn(data.index, state.players.length)
                   ].pick = 1;
-                  room.players[
-                        whosTurn(data.index, room.players.length)
+                  state.players[
+                        whosTurn(data.index, state.players.length)
                   ].throw = 1;
             }
             io.to(data.roomID).emit('move', data);
-            room.dealers = data.dealers;
-            fs.writeFileSync(
-                  './rooms/' + data.roomID + '.json',
-                  JSON.stringify(room)
-            );
+            state.dealers = data.dealers;
+            const update = await db
+                  .connection('rooms')
+                  .where('room_key', data.roomID)
+                  .update({
+                        state: JSON.stringify(state)
+                  });
       });
 });
 
